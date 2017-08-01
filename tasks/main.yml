@@ -1,0 +1,81 @@
+---
+# tasks file for cisco_router
+- name: "HIGH | V-3062 | The network element must be configured to ensure passwords are not viewable when displaying configuration information."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - service password-encryption
+
+- name: "HIGH | V-3175 | The network devices must require authentication prior to establishing a management connection for administrative access."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - login authentication default
+      - transport input ssh
+    parents: line vty 0 15
+    defaults: yes
+
+- name: "HIGH | V-4582 | The network device must require authentication for console access."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - login authentication default
+      - exec-timeout 10 0
+      - line aux 0
+      - no exec
+    parents: line con 0
+    defaults: yes
+
+- name: "MEDIUM | V-3069 | Management connections to a network device must be established using secure protocols with FIPS 140-2 validated cryptographic modules."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+#      - crypto key generate rsa modulus 2048
+      - ip ssh time-out 60
+      - ip ssh authentication-retries 3
+      - ip ssh version 2
+      - ip scp server enable
+      - ip http secure-server
+    defaults: yes
+
+- name: "MEDIUM | V-5646 | The network device must drop half-open TCP connections through filtering thresholds or timeout periods."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - ip tcp synwait-time 10
+
+#- name: "MEDIUM | V-3013 | Network devices must display the DoD-approved logon banner warning."
+#  ios_banner:
+#    banner: login
+#    text: "{{ local_banner }}"
+#    state: present
+
+- block:
+  - name: "MEDIUM | V-3014 | The network element must timeout management connections for administrative access after 10 minutes or less of inactivity. (con 0)"
+    ios_config:
+      provider: "{{ netops_provider | default (omit) }}"
+      lines:
+        - exec-timeout 10 0
+      parents: line con 0
+      defaults: yes
+
+  - name: "MEDIUM | V-3014 | The network element must timeout management connections for administrative access after 10 minutes or less of inactivity. (vty 0 15)"
+    ios_config:
+      provider: "{{ netops_provider | default (omit) }}"
+      lines:
+        - exec-timeout 10 0
+      parents: line vty 0 15
+      defaults: yes
+
+- name: "MEDIUM | V-14669 | The administrator must ensure BSD r command services are disabled."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - no ip rcmd rcp-enable
+      - no ip rcmd rsh-enable
+
+- name: "MEDIUM | V-28784 | A service or feature that calls home to the vendor must be disabled."
+  ios_config:
+    provider: "{{ netops_provider | default (omit) }}"
+    lines:
+      - no service call-home
